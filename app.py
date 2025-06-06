@@ -49,6 +49,13 @@ if st.button("▶️ Calcola") and ciclo_file and viti_file and motori_file and 
             st.error("❌ Nessuna vite compatibile")
         else:
             vite_sel = viti_compatibili.iloc[0]
+            lunghezza_libera = corsa_totale_input  # assunzione
+            # Calcolo velocità critica (formula semplificata)
+            K = 9.87  # per estremità libere
+            diametro = 20  # mm, ipotesi
+            E = 2.1e5  # MPa
+            v_cr = (K * np.pi / lunghezza_libera)**2 * E * (np.pi * diametro**4 / 64) / 1e6  # rpm teorici
+            st.info(f"🔄 Velocità critica stimata: {v_cr:.0f} rpm")
             st.success(f"✅ Vite: {vite_sel['codice']}")
 
             riduttore_sel = riduttori_df.iloc[0]
@@ -85,8 +92,29 @@ if st.button("▶️ Calcola") and ciclo_file and viti_file and motori_file and 
             doc.add_paragraph(f"Motore selezionato: {codice_motore}")
             doc.add_paragraph(f"Vite selezionata: {vite_sel['codice']}")
             doc.add_paragraph(f"Riduttore selezionato: {riduttore_sel['codice']}")
+            doc.add_paragraph(f"Corsa effettiva: {corsa_effettiva:.1f} mm")
+            doc.add_paragraph(f"Accelerazione massima: {ciclo_df['accelerazione'].abs().max():.1f} mm/s²")
+            doc.add_paragraph(f"Jerk massimo: {ciclo_df['jerk'].abs().max():.1f} mm/s³")
+            vita_cicli = 1e6  # esempio statico
+            ore_giornaliere = 16
+            sec_per_ciclo = ciclo_df["tempo"].iloc[-1] - ciclo_df["tempo"].iloc[0]
+            cicli_giornalieri = (ore_giornaliere * 3600) / sec_per_ciclo if sec_per_ciclo > 0 else 0
+            anni = vita_cicli / (cicli_giornalieri * 365) if cicli_giornalieri > 0 else 0
+            doc.add_paragraph(f"Vita utile stimata: {vita_cicli:.0f} cicli")
+            doc.add_paragraph(f"Vita utile stimata: {anni:.1f} anni (con 16h/giorno)")
             if curva_img_path and os.path.exists(curva_img_path):
                 doc.add_picture(curva_img_path, width=Inches(5.5))
+            if curva_df is not None:
+                table = doc.add_table(rows=1, cols=3)
+                hdr_cells = table.rows[0].cells
+                hdr_cells[0].text = "RPM"
+                hdr_cells[1].text = "Coppia Nominale [Nm]"
+                hdr_cells[2].text = "Coppia Massima [Nm]"
+                for _, row in curva_df.iterrows():
+                    row_cells = table.add_row().cells
+                    row_cells[0].text = str(row["rpm"])
+                    row_cells[1].text = str(row["tau_nom"])
+                    row_cells[2].text = str(row["tau_max"])
             doc.save(report_path)
             st.success("📄 Report generato!")
 
