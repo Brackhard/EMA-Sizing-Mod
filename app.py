@@ -48,8 +48,8 @@ st.subheader("📏 Verifica corsa")
 st.write("✅ Analisi corsa iniziata")
 corsa_ciclo = df["posizione"].max() - df["posizione"].min()
 st.write(f"Corsa effettiva: {corsa_ciclo:.1f} mm")
-            st.error("❌ Corsa richiesta superiore alla corsa disponibile")
-            st.stop()
+    st.error("❌ Corsa richiesta superiore alla corsa disponibile")
+    st.stop()
 
         st.subheader("🧮 Calcolo carico equivalente")
         st.write("✅ Carico equivalente calcolato")
@@ -63,10 +63,10 @@ st.write(f"Corsa effettiva: {corsa_ciclo:.1f} mm")
         for _, v in viti_df.iterrows():
                 viti_valid.append(v)
             vite_valida = viti_valid[0]
-            st.write("✅ Vite selezionata")
-            st.success(f"Vite selezionata: {vite_valida['codice']}")
-            st.error("❌ Nessuna vite compatibile trovata")
-            st.stop()
+    st.write("✅ Vite selezionata")
+    st.success(f"Vite selezionata: {vite_valida['codice']}")
+    st.error("❌ Nessuna vite compatibile trovata")
+    st.stop()
         st.subheader("⚙️ Selezione riduttore")
         st.write("✅ File riduttori caricato")
         rid_df = pd.read_excel(riduttori_file)
@@ -99,14 +99,14 @@ st.write(f"Corsa effettiva: {corsa_ciclo:.1f} mm")
                     df_curve = pd.read_excel(file)
                     codice = file.name.replace('.xlsx','')
                     curve_motori[codice] = df_curve
-                    st.success(f"✅ Caricata curva: {codice}")
+    st.success(f"✅ Caricata curva: {codice}")
                 except Exception as e:
-                    st.error(f"Errore nel file {file.name}: {e}")
+    st.error(f"Errore nel file {file.name}: {e}")
         motori_validi = motori_df[
             (motori_df["coppia_massima"] >= torque_motore) &
             (motori_df["velocita_nominale"] >= rpm_motore)
         ]
-            st.success(f"Motore selezionato: {motori_validi.iloc[0]['codice']}")
+    st.success(f"Motore selezionato: {motori_validi.iloc[0]['codice']}")
 
         # Verifica curva motore e generazione grafico
             curva = curve_motori[codice_motore]
@@ -117,10 +117,10 @@ st.write(f"Corsa effettiva: {corsa_ciclo:.1f} mm")
             ax.set_xlabel('Velocità [rpm]')
             ax.set_ylabel('Coppia [Nm]')
             ax.legend()
-            st.pyplot(fig)
+    st.pyplot(fig)
             fig.savefig(f"curva_{codice_motore}.png")  # salva per report
-            st.warning(f"Nessuna curva trovata per il motore {codice_motore}")
-            st.warning("❌ Nessun motore compatibile trovato")
+    st.warning(f"Nessuna curva trovata per il motore {codice_motore}")
+    st.warning("❌ Nessun motore compatibile trovato")
 
         # Vita utile
         st.subheader("🕒 Calcolo vita utile")
@@ -142,7 +142,7 @@ st.write(f"Corsa effettiva: {corsa_ciclo:.1f} mm")
         try:
             doc.add_picture(f"curva_{codice_motore}.png", width=Inches(5.5))
         except Exception as e:
-            st.warning("Curva non inserita nel report: " + str(e))
+    st.warning("Curva non inserita nel report: " + str(e))
         report_path = f"report_dimensionamento_{codice_motore}.docx"
         doc.save(report_path)
         st.success(f"📄 Report generato: {report_path}")
@@ -158,6 +158,6 @@ st.write(f"Corsa effettiva: {corsa_ciclo:.1f} mm")
         try:
             doc.add_picture(f"curva_{codice_motore}.png", width=Inches(5.5))
         except Exception as e:
-            st.warning("Curva non inserita nel report: " + str(e))
+    st.warning("Curva non inserita nel report: " + str(e))
             with open(temp_path, "rb") as file:
-                st.download_button("📄 Scarica Report DOCX", file, file_name="report_dimensionamento.docx")
+    st.download_button("📄 Scarica Report DOCX", file, file_name="report_dimensionamento.docx")
