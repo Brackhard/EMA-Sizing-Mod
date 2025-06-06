@@ -99,12 +99,40 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         st.subheader("🔌 Selezione motore")
         st.write("✅ File motori caricato")
         motori_df = pd.read_excel(motori_file)
+
+        # Caricamento curve caratteristiche dei motori
+        curve_files = st.file_uploader("Carica le curve motore (più file .xlsx)", type="xlsx", accept_multiple_files=True)
+        curve_motori = {}
+        if curve_files:
+            for file in curve_files:
+                try:
+                    df_curve = pd.read_excel(file)
+                    codice = file.name.replace('.xlsx','')
+                    curve_motori[codice] = df_curve
+                    st.success(f"✅ Caricata curva: {codice}")
+                except Exception as e:
+                    st.error(f"Errore nel file {file.name}: {e}")
         motori_validi = motori_df[
             (motori_df["coppia_massima"] >= torque_motore) &
             (motori_df["velocita_nominale"] >= rpm_motore)
         ]
         if not motori_validi.empty:
             st.success(f"Motore selezionato: {motori_validi.iloc[0]['codice']}")
+
+        # Verifica curva motore e generazione grafico
+        if codice_motore in curve_motori:
+            curva = curve_motori[codice_motore]
+            fig, ax = plt.subplots()
+            ax.plot(curva['velocità'], curva['coppia_nominale'], label='Coppia Nominale')
+            ax.plot(curva['velocità'], curva['coppia_massima'], label='Coppia Massima', linestyle='--')
+            ax.set_title(f"Curva motore {codice_motore}")
+            ax.set_xlabel('Velocità [rpm]')
+            ax.set_ylabel('Coppia [Nm]')
+            ax.legend()
+            st.pyplot(fig)
+            fig.savefig(f"curva_{codice_motore}.png")  # salva per report
+        else:
+            st.warning(f"Nessuna curva trovata per il motore {codice_motore}")
         else:
             st.warning("❌ Nessun motore compatibile trovato")
 
@@ -138,5 +166,9 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
             doc.add_paragraph(f"Cicli: {vita_cicli:,.0f}, Anni: {vita_anni:.1f}")
             temp_path = os.path.join(tempfile.gettempdir(), "report_dimensionamento.docx")
             doc.save(temp_path)
+        try:
+            doc.add_picture(f"curva_{codice_motore}.png", width=Inches(5.5))
+        except Exception as e:
+            st.warning("Curva non inserita nel report: " + str(e))
             with open(temp_path, "rb") as file:
                 st.download_button("📄 Scarica Report DOCX", file, file_name="report_dimensionamento.docx")
