@@ -64,21 +64,18 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
 
         # Selezione vite
         st.subheader("🔩 Selezione vite")
-        st.write("✅ File viti caricato")
         viti_df = pd.read_excel(viti_file)
         viti_valid = []
         for _, v in viti_df.iterrows():
-            if Feq <= v["C"] and corsa_totale_input <= v["nocciolo"] * 25:  # semplificazione
+            if Feq <= v['C'] and corsa_totale_input <= v['nocciolo'] * 25:
                 viti_valid.append(v)
         if viti_valid:
-    vite_valida = viti_valid[0]
-    st.write("✅ Vite selezionata")
-    st.success(f"Vite selezionata: {vite_valida['codice']}")
+            vite_valida = viti_valid[0]
+            st.write("✅ Vite selezionata")
+            st.success(f"Vite selezionata: {vite_valida['codice']}")
         else:
             st.error("❌ Nessuna vite compatibile trovata")
             st.stop()
-
-        # Selezione riduttore
         st.subheader("⚙️ Selezione riduttore")
         st.write("✅ File riduttori caricato")
         rid_df = pd.read_excel(riduttori_file)
@@ -103,7 +100,7 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         st.write("✅ File motori caricato")
         motori_df = pd.read_excel(motori_file)
         motori_validi = motori_df[
-            (motori_df["coppia_massima"] >= torque_motore) & 
+            (motori_df["coppia_massima"] >= torque_motore) &
             (motori_df["velocita_nominale"] >= rpm_motore)
         ]
         if not motori_validi.empty:
