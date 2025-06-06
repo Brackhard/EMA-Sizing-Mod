@@ -73,7 +73,7 @@ if st.button("▶️ Calcola") and ciclo_file and viti_file and motori_file and 
                 ax.set_ylabel("Coppia [Nm]")
                 ax.set_title(f"Curva motore {codice_motore}")
                 ax.legend()
-                curva_img_path = f"/mnt/data/curva_{codice_motore}.png"
+                curva_img_path = f"curva_{codice_motore}.png"
                 fig.savefig(curva_img_path)
                 st.pyplot(fig)
             else:
