@@ -19,11 +19,8 @@ corsa_totale_input = st.number_input("📏 Corsa totale attuatore (mm)", min_val
 limite_acc = st.number_input("⏱️ Limite accelerazione (mm/s²)", value=5000.0)
 limite_jerk = st.number_input("⚡ Limite jerk (mm/s³)", value=50000.0)
 
-if all([ciclo_file, viti_file, motori_file, riduttori_file]):
-    if st.button("▶️ Calcola"):
         df = pd.read_excel(ciclo_file)
         df.columns = [c.strip().lower() for c in df.columns]
-        if not {'tempo', 'posizione', 'forza'}.issubset(df.columns):
             st.error("❌ Il file deve contenere le colonne: 'tempo', 'posizione', 'forza'")
             st.stop()
 
@@ -37,9 +34,7 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         max_jerk = df["jerk"].abs().max()
 
         st.subheader("📈 Analisi del ciclo")
-        if max_acc > limite_acc:
             st.warning("⚠️ Accelerazione oltre il limite")
-        if max_jerk > limite_jerk:
             st.warning("⚠️ Jerk oltre il limite")
 
         fig, axs = plt.subplots(4, 1, figsize=(8, 10), sharex=True)
@@ -53,7 +48,6 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         st.write("✅ Analisi corsa iniziata")
         corsa_ciclo = df["posizione"].max() - df["posizione"].min()
         st.write(f"Corsa effettiva: {corsa_ciclo:.1f} mm")
-        if corsa_ciclo > corsa_totale_input:
             st.error("❌ Corsa richiesta superiore alla corsa disponibile")
             st.stop()
 
@@ -67,9 +61,7 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         viti_df = pd.read_excel(viti_file)
         viti_valid = []
         for _, v in viti_df.iterrows():
-            if Feq <= v['C'] and corsa_totale_input <= v['nocciolo'] * 25:
                 viti_valid.append(v)
-        if viti_valid:
             vite_valida = viti_valid[0]
             st.write("✅ Vite selezionata")
             st.success(f"Vite selezionata: {vite_valida['codice']}")
@@ -102,7 +94,6 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         # Caricamento curve caratteristiche dei motori
         curve_files = st.file_uploader("Carica le curve motore (più file .xlsx)", type="xlsx", accept_multiple_files=True)
         curve_motori = {}
-        if curve_files:
             for file in curve_files:
                 try:
                     df_curve = pd.read_excel(file)
@@ -115,11 +106,9 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
             (motori_df["coppia_massima"] >= torque_motore) &
             (motori_df["velocita_nominale"] >= rpm_motore)
         ]
-        if not motori_validi.empty:
             st.success(f"Motore selezionato: {motori_validi.iloc[0]['codice']}")
 
         # Verifica curva motore e generazione grafico
-        if codice_motore in curve_motori:
             curva = curve_motori[codice_motore]
             fig, ax = plt.subplots()
             ax.plot(curva['velocità'], curva['coppia_nominale'], label='Coppia Nominale')
@@ -144,7 +133,6 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         st.write(f"Durata stimata: {vita_anni:.1f} anni (16h/giorno, 250gg/anno)")
 
         # Report DOCX
-        if st.button("📤 Esporta report"):
         doc = Document()
         doc.add_heading('Report Dimensionamento Attuatore', 0)
         doc.add_paragraph(f"Motore selezionato: {codice_motore}")
@@ -158,7 +146,6 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         report_path = f"report_dimensionamento_{codice_motore}.docx"
         doc.save(report_path)
         st.success(f"📄 Report generato: {report_path}")
-            if not motori_validi.empty:
                 doc.add_paragraph(f"Motore: {motori_validi.iloc[0]['codice']}")
             doc.add_paragraph(f"RPM motore: {rpm_motore:.0f}, Coppia: {torque_motore:.2f} Nm")
             doc.add_heading("🕒 Vita utile", level=1)
