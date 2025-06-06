@@ -73,7 +73,6 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
             vite_valida = viti_valid[0]
             st.write("✅ Vite selezionata")
             st.success(f"Vite selezionata: {vite_valida['codice']}")
-        else:
             st.error("❌ Nessuna vite compatibile trovata")
             st.stop()
         st.subheader("⚙️ Selezione riduttore")
@@ -131,9 +130,7 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
             ax.legend()
             st.pyplot(fig)
             fig.savefig(f"curva_{codice_motore}.png")  # salva per report
-        else:
             st.warning(f"Nessuna curva trovata per il motore {codice_motore}")
-        else:
             st.warning("❌ Nessun motore compatibile trovato")
 
         # Vita utile
@@ -148,17 +145,19 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
 
         # Report DOCX
         if st.button("📤 Esporta report"):
-            doc = Document()
-            doc.add_heading("Report di Dimensionamento Attuatore", 0)
-            doc.add_heading("📈 Ciclo", level=1)
-            doc.add_paragraph(f"Max accelerazione: {max_acc:.1f} mm/s²")
-            doc.add_paragraph(f"Max jerk: {max_jerk:.1f} mm/s³")
-            doc.add_heading("📏 Verifiche", level=1)
-            doc.add_paragraph(f"Corsa effettiva: {corsa_ciclo:.1f} mm (max: {corsa_totale_input} mm)")
-            doc.add_paragraph(f"Carico equivalente: {Feq:.0f} N")
-            doc.add_heading("⚙️ Componenti", level=1)
-            doc.add_paragraph(f"Vite: {vite_valida['codice']}")
-            doc.add_paragraph(f"Riduttore: {rid_sel}")
+        doc = Document()
+        doc.add_heading('Report Dimensionamento Attuatore', 0)
+        doc.add_paragraph(f"Motore selezionato: {codice_motore}")
+        doc.add_paragraph(f"Vite selezionata: {vite_valida['codice']}")
+        doc.add_paragraph(f"Riduttore selezionato: {riduttore_valido['codice']}")
+        try:
+        try:
+            doc.add_picture(f"curva_{codice_motore}.png", width=Inches(5.5))
+        except Exception as e:
+            st.warning("Curva non inserita nel report: " + str(e))
+        report_path = f"report_dimensionamento_{codice_motore}.docx"
+        doc.save(report_path)
+        st.success(f"📄 Report generato: {report_path}")
             if not motori_validi.empty:
                 doc.add_paragraph(f"Motore: {motori_validi.iloc[0]['codice']}")
             doc.add_paragraph(f"RPM motore: {rpm_motore:.0f}, Coppia: {torque_motore:.2f} Nm")
@@ -166,6 +165,9 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
             doc.add_paragraph(f"Cicli: {vita_cicli:,.0f}, Anni: {vita_anni:.1f}")
             temp_path = os.path.join(tempfile.gettempdir(), "report_dimensionamento.docx")
             doc.save(temp_path)
+        try:
+        try:
+        try:
         try:
             doc.add_picture(f"curva_{codice_motore}.png", width=Inches(5.5))
         except Exception as e:
