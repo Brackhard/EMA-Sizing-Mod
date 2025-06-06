@@ -29,7 +29,7 @@ if ciclo_file:
         ciclo_df["jerk"] = np.gradient(ciclo_df["accelerazione"], ciclo_df["tempo"])
 
         st.subheader("📊 Grafici ciclo")
-        fig, ax = plt.subplots(4, 1, figsize=(8, 10), sharex=True)
+        fig, ax = plt.subplots(4, 1, figsize=(8, 6), sharex=True)
         ax[0].plot(ciclo_df["tempo"], ciclo_df["posizione"])
         ax[0].set_ylabel("Posizione [mm]")
         ax[1].plot(ciclo_df["tempo"], ciclo_df["velocita"])
@@ -55,6 +55,19 @@ riduttori_file = col_r.file_uploader("⚙️ Database Riduttori", type="xlsx")
 curve_files = st.file_uploader("📈 Curve Motore (puoi caricare più file)", type="xlsx", accept_multiple_files=True)
 corsa_totale_input = st.number_input("📏 Corsa totale disponibile [mm]", min_value=10.0, value=100.0)
 
+if viti_file:
+    viti_df_temp = pd.read_excel(viti_file)
+    diametri_possibili = sorted(set([20, 25, 32]))  # default se colonna non presente
+    if "diametro" in viti_df_temp.columns:
+        diametri_possibili = sorted(viti_df_temp["diametro"].unique())
+    diametro_sel = st.selectbox("📏 Seleziona diametro vite [mm]", diametri_possibili)
+
+if riduttori_file:
+    riduttori_df_temp = pd.read_excel(riduttori_file)
+    opzioni_riduttori = list(riduttori_df_temp["codice"].unique())
+    codice_riduttore_sel = st.selectbox("⚙️ Seleziona riduttore", opzioni_riduttori)
+
+
 # --- CALCOLO COMPLETO ---
 if st.button("▶️ Calcola") and ciclo_df is not None and viti_file and motori_file and riduttori_file:
     corsa_effettiva = ciclo_df["posizione"].max() - ciclo_df["posizione"].min()
@@ -77,11 +90,13 @@ if st.button("▶️ Calcola") and ciclo_df is not None and viti_file and motori
             lunghezza_libera = corsa_totale_input
             K = 9.87
             diametro = 20
+            diametro = diametro_sel
             E = 2.1e5
             v_cr = (K * np.pi / lunghezza_libera)**2 * E * (np.pi * diametro**4 / 64) / 1e6
             st.warning(f"🔄 Velocità critica stimata: {v_cr:.0f} rpm")
 
             riduttore_sel = riduttori_df.iloc[0]
+            riduttore_sel = riduttori_df[riduttori_df["codice"] == codice_riduttore_sel].iloc[0]
             st.success(f"⚙️ Riduttore: {riduttore_sel['codice']}")
 
             motore_sel = motori_df.iloc[0]
