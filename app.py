@@ -31,6 +31,7 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         df["velocita"] = np.gradient(df["posizione"], df["tempo"])
         df["accelerazione"] = np.gradient(df["velocita"], df["tempo"])
         df["jerk"] = np.gradient(df["accelerazione"], df["tempo"])
+        st.write("✅ Jerk calcolato")
 
         max_acc = df["accelerazione"].abs().max()
         max_jerk = df["jerk"].abs().max()
@@ -51,6 +52,7 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         st.pyplot(fig)
 
         st.subheader("📏 Verifica corsa")
+        st.write("✅ Analisi corsa iniziata")
         corsa_ciclo = df["posizione"].max() - df["posizione"].min()
         st.write(f"Corsa effettiva: {corsa_ciclo:.1f} mm")
         if corsa_ciclo > corsa_totale_input:
@@ -58,17 +60,20 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
             st.stop()
 
         st.subheader("🧮 Calcolo carico equivalente")
+        st.write("✅ Carico equivalente calcolato")
         Feq = np.sqrt(np.mean(df["forza"]**2))
         st.write(f"Carico equivalente: {Feq:.0f} N")
 
         # Selezione vite
         st.subheader("🔩 Selezione vite")
+        st.write("✅ File viti caricato")
         viti_df = pd.read_excel(viti_file)
         viti_valid = []
         for _, v in viti_df.iterrows():
             if Feq <= v["C"] and corsa_totale_input <= v["nocciolo"] * 25:  # semplificazione
                 viti_valid.append(v)
         if viti_valid:
+        st.write("✅ Vite selezionata")
             vite_valida = viti_valid[0]
             st.success(f"Vite selezionata: {vite_valida['codice']}")
         else:
@@ -77,6 +82,7 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
 
         # Selezione riduttore
         st.subheader("⚙️ Selezione riduttore")
+        st.write("✅ File riduttori caricato")
         rid_df = pd.read_excel(riduttori_file)
         rid_df = pd.concat([pd.DataFrame([{"codice": "Diretta", "rapporto": 1.0, "rendimento": 1.0}]), rid_df], ignore_index=True)
         rid_sel = st.selectbox("Seleziona riduttore", rid_df["codice"])
@@ -96,6 +102,7 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
 
         # Selezione motore
         st.subheader("🔌 Selezione motore")
+        st.write("✅ File motori caricato")
         motori_df = pd.read_excel(motori_file)
         motori_validi = motori_df[
             (motori_df["coppia_massima"] >= torque_motore) & 
@@ -110,6 +117,7 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         st.subheader("🕒 Calcolo vita utile")
         C = vite_valida["C"]
         C0 = vite_valida["C0"]
+        st.write("✅ Vita utile calcolata")
         vita_cicli = (C / Feq)**3 * 1e6
         vita_anni = vita_cicli / (3600 * 16 * 250)
         st.write(f"Cicli raggiungibili: {vita_cicli:,.0f}")
