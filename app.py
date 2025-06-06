@@ -71,9 +71,9 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
             if Feq <= v["C"] and corsa_totale_input <= v["nocciolo"] * 25:  # semplificazione
                 viti_valid.append(v)
         if viti_valid:
+        vite_valida = viti_valid[0]
         st.write("✅ Vite selezionata")
-            vite_valida = viti_valid[0]
-            st.success(f"Vite selezionata: {vite_valida['codice']}")
+        st.success(f"Vite selezionata: {vite_valida['codice']}")
         else:
             st.error("❌ Nessuna vite compatibile trovata")
             st.stop()
