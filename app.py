@@ -37,8 +37,6 @@ if all([ciclo_file, viti_file, motori_file, riduttori_file]):
         max_jerk = df["jerk"].abs().max()
 
         st.subheader("📈 Analisi del ciclo")
-        st.write(f"**Accelerazione max:** {max_acc:.1f} mm/s²  \n**Jerk max:** {max_jerk:.1f} mm/s³")
-    **Jerk max:** {max_jerk:.1f} mm/s³")
         if max_acc > limite_acc:
             st.warning("⚠️ Accelerazione oltre il limite")
         if max_jerk > limite_jerk:
