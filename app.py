@@ -20,8 +20,11 @@ limite_jerk = st.number_input("⚡ Limite jerk [mm/s³]", min_value=0.0, value=5
 
 if all([ciclo_file, viti_file, motori_file, riduttori_file, curve_folder]) and corsa_totale_input > 0:
     df = pd.read_excel(ciclo_file)
-df.columns = [c.strip().lower() for c in df.columns]
+    df.columns = [c.strip().lower() for c in df.columns]
+    st.write("📋 Colonne caricate:", list(df.columns))
     if not {'tempo', 'posizione', 'forza'}.issubset(df.columns):
+        st.error("❌ Il file deve contenere le colonne: 'tempo', 'posizione', 'forza'.")
+        st.stop()
         st.error("❌ Il file deve contenere colonne: 'tempo', 'posizione', 'forza'.")
         st.stop()
 
