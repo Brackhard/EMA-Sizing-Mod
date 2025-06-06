@@ -6,11 +6,20 @@ from docx import Document
 from docx.shared import Inches
 import os
 
+st.set_page_config(page_title="EMA Configuratore", layout="wide")
 st.title("⚙️ Configuratore Attuatore Elettromeccanico")
+st.markdown("Semplifica la selezione di vite, motore e riduttore per il tuo sistema.")
 
-# --- Ciclo di lavoro ---
+# --- CICLO DI LAVORO ---
 st.header("📈 Ciclo di lavoro")
-ciclo_file = st.file_uploader("Carica ciclo di lavoro (xlsx con tempo, posizione)", type="xlsx")
+col1, col2 = st.columns(2)
+with col1:
+    ciclo_file = st.file_uploader("Carica file ciclo (xlsx con tempo, posizione, forza)", type="xlsx")
+
+# Inizializziamo dataframe
+ciclo_df = None
+report_path = "report_dimensionamento.docx"
+
 if ciclo_file:
     ciclo_df = pd.read_excel(ciclo_file)
     if "tempo" in ciclo_df.columns and "posizione" in ciclo_df.columns:
@@ -18,25 +27,39 @@ if ciclo_file:
         ciclo_df["velocita"] = np.gradient(ciclo_df["posizione"], ciclo_df["tempo"])
         ciclo_df["accelerazione"] = np.gradient(ciclo_df["velocita"], ciclo_df["tempo"])
         ciclo_df["jerk"] = np.gradient(ciclo_df["accelerazione"], ciclo_df["tempo"])
-        st.line_chart(ciclo_df.set_index("tempo")[["posizione", "velocita", "accelerazione"]])
-        st.write(f"**Accelerazione max:** {ciclo_df['accelerazione'].abs().max():.1f} mm/s²")
-        st.write(f"**Jerk max:** {ciclo_df['jerk'].abs().max():.1f} mm/s³")
+
+        st.subheader("📊 Grafici ciclo")
+        fig, ax = plt.subplots(4, 1, figsize=(8, 10), sharex=True)
+        ax[0].plot(ciclo_df["tempo"], ciclo_df["posizione"])
+        ax[0].set_ylabel("Posizione [mm]")
+        ax[1].plot(ciclo_df["tempo"], ciclo_df["velocita"])
+        ax[1].set_ylabel("Velocità [mm/s]")
+        ax[2].plot(ciclo_df["tempo"], ciclo_df["accelerazione"])
+        ax[2].set_ylabel("Accelerazione [mm/s²]")
+        ax[3].plot(ciclo_df["tempo"], ciclo_df["jerk"])
+        ax[3].set_ylabel("Jerk [mm/s³]")
+        ax[3].set_xlabel("Tempo [s]")
+        st.pyplot(fig)
+
+        st.success(f"✅ Accelerazione max: {ciclo_df['accelerazione'].abs().max():.1f} mm/s²")
+        st.success(f"✅ Jerk max: {ciclo_df['jerk'].abs().max():.1f} mm/s³")
     else:
-        st.error("Il file deve contenere le colonne 'tempo' e 'posizione'.")
+        st.error("❌ Il file deve contenere almeno 'tempo' e 'posizione'.")
 
-# --- Componenti ---
-st.header("📂 Componenti")
-viti_file = st.file_uploader("Database viti", type="xlsx")
-motori_file = st.file_uploader("Database motori", type="xlsx")
-riduttori_file = st.file_uploader("Database riduttori", type="xlsx")
-curve_files = st.file_uploader("Curve motore (puoi caricare più file)", type="xlsx", accept_multiple_files=True)
-corsa_totale_input = st.number_input("Corsa totale attuatore [mm]", min_value=10.0, value=100.0)
+# --- INPUT COMPONENTI ---
+st.header("📂 Componenti e Parametri")
+col_v, col_m, col_r = st.columns(3)
+viti_file = col_v.file_uploader("🔩 Database Viti", type="xlsx")
+motori_file = col_m.file_uploader("🔋 Database Motori", type="xlsx")
+riduttori_file = col_r.file_uploader("⚙️ Database Riduttori", type="xlsx")
+curve_files = st.file_uploader("📈 Curve Motore (puoi caricare più file)", type="xlsx", accept_multiple_files=True)
+corsa_totale_input = st.number_input("📏 Corsa totale disponibile [mm]", min_value=10.0, value=100.0)
 
-# --- Calcolo e selezione ---
-report_path = "report_dimensionamento.docx"
-
-if st.button("▶️ Calcola") and ciclo_file and viti_file and motori_file and riduttori_file:
+# --- CALCOLO COMPLETO ---
+if st.button("▶️ Calcola") and ciclo_df is not None and viti_file and motori_file and riduttori_file:
     corsa_effettiva = ciclo_df["posizione"].max() - ciclo_df["posizione"].min()
+    st.info(f"Corsa effettiva del ciclo: {corsa_effettiva:.1f} mm")
+
     if corsa_effettiva > corsa_totale_input:
         st.error("❌ Corsa richiesta superiore alla corsa disponibile")
     else:
@@ -49,14 +72,14 @@ if st.button("▶️ Calcola") and ciclo_file and viti_file and motori_file and 
             st.error("❌ Nessuna vite compatibile")
         else:
             vite_sel = viti_compatibili.iloc[0]
-            lunghezza_libera = corsa_totale_input  # assunzione
-            # Calcolo velocità critica (formula semplificata)
-            K = 9.87  # per estremità libere
-            diametro = 20  # mm, ipotesi
-            E = 2.1e5  # MPa
-            v_cr = (K * np.pi / lunghezza_libera)**2 * E * (np.pi * diametro**4 / 64) / 1e6  # rpm teorici
-            st.info(f"🔄 Velocità critica stimata: {v_cr:.0f} rpm")
-            st.success(f"✅ Vite: {vite_sel['codice']}")
+            st.success(f"✅ Vite selezionata: {vite_sel['codice']}")
+
+            lunghezza_libera = corsa_totale_input
+            K = 9.87
+            diametro = 20
+            E = 2.1e5
+            v_cr = (K * np.pi / lunghezza_libera)**2 * E * (np.pi * diametro**4 / 64) / 1e6
+            st.warning(f"🔄 Velocità critica stimata: {v_cr:.0f} rpm")
 
             riduttore_sel = riduttori_df.iloc[0]
             st.success(f"⚙️ Riduttore: {riduttore_sel['codice']}")
@@ -71,40 +94,40 @@ if st.button("▶️ Calcola") and ciclo_file and viti_file and motori_file and 
                     curva_df = pd.read_excel(f)
                     break
 
-            curva_img_path = None
+            curva_img_path = f"curva_{codice_motore}.png"
             if curva_df is not None:
-                fig, ax = plt.subplots()
-                ax.plot(curva_df["rpm"], curva_df["tau_nom"], label="Coppia Nominale")
-                ax.plot(curva_df["rpm"], curva_df["tau_max"], label="Coppia Massima", linestyle="--")
-                ax.set_xlabel("Velocità [rpm]")
-                ax.set_ylabel("Coppia [Nm]")
-                ax.set_title(f"Curva motore {codice_motore}")
-                ax.legend()
-                curva_img_path = f"curva_{codice_motore}.png"
-                fig.savefig(curva_img_path)
-                st.pyplot(fig)
-            else:
-                st.warning("⚠️ Nessuna curva trovata per il motore")
+                fig2, ax2 = plt.subplots()
+                ax2.plot(curva_df["rpm"], curva_df["tau_nom"], label="Coppia Nominale")
+                ax2.plot(curva_df["rpm"], curva_df["tau_max"], label="Coppia Massima", linestyle="--")
+                ax2.set_xlabel("Velocità [rpm]")
+                ax2.set_ylabel("Coppia [Nm]")
+                ax2.set_title(f"Curva motore {codice_motore}")
+                ax2.legend()
+                fig2.savefig(curva_img_path)
+                st.pyplot(fig2)
 
-            # --- Generazione report Word ---
+            # --- GENERA REPORT ---
             doc = Document()
-            doc.add_heading("Report Dimensionamento Attuatore", 0)
+            doc.add_heading("📄 Report Dimensionamento", 0)
             doc.add_paragraph(f"Motore selezionato: {codice_motore}")
             doc.add_paragraph(f"Vite selezionata: {vite_sel['codice']}")
             doc.add_paragraph(f"Riduttore selezionato: {riduttore_sel['codice']}")
             doc.add_paragraph(f"Corsa effettiva: {corsa_effettiva:.1f} mm")
-            doc.add_paragraph(f"Accelerazione massima: {ciclo_df['accelerazione'].abs().max():.1f} mm/s²")
-            doc.add_paragraph(f"Jerk massimo: {ciclo_df['jerk'].abs().max():.1f} mm/s³")
-            vita_cicli = 1e6  # esempio statico
+            doc.add_paragraph(f"Accelerazione max: {ciclo_df['accelerazione'].abs().max():.1f} mm/s²")
+            doc.add_paragraph(f"Jerk max: {ciclo_df['jerk'].abs().max():.1f} mm/s³")
+            doc.add_paragraph(f"Velocità critica stimata: {v_cr:.0f} rpm")
+
+            # Vita utile stimata
+            vita_cicli = 1e6
             ore_giornaliere = 16
             sec_per_ciclo = ciclo_df["tempo"].iloc[-1] - ciclo_df["tempo"].iloc[0]
             cicli_giornalieri = (ore_giornaliere * 3600) / sec_per_ciclo if sec_per_ciclo > 0 else 0
             anni = vita_cicli / (cicli_giornalieri * 365) if cicli_giornalieri > 0 else 0
             doc.add_paragraph(f"Vita utile stimata: {vita_cicli:.0f} cicli")
-            doc.add_paragraph(f"Vita utile stimata: {anni:.1f} anni (con 16h/giorno)")
-            if curva_img_path and os.path.exists(curva_img_path):
-                doc.add_picture(curva_img_path, width=Inches(5.5))
+            doc.add_paragraph(f"Vita utile stimata: {anni:.1f} anni")
+
             if curva_df is not None:
+                doc.add_picture(curva_img_path, width=Inches(5.5))
                 table = doc.add_table(rows=1, cols=3)
                 hdr_cells = table.rows[0].cells
                 hdr_cells[0].text = "RPM"
@@ -115,15 +138,16 @@ if st.button("▶️ Calcola") and ciclo_file and viti_file and motori_file and 
                     row_cells[0].text = str(row["rpm"])
                     row_cells[1].text = str(row["tau_nom"])
                     row_cells[2].text = str(row["tau_max"])
-            doc.save(report_path)
-            st.success("📄 Report generato!")
 
-# --- Pulsante download report ---
+            doc.save(report_path)
+            st.success("📄 Report generato con successo!")
+
+# --- DOWNLOAD REPORT ---
 if os.path.exists(report_path):
-    with open(report_path, "rb") as file:
+    with open(report_path, "rb") as f:
         st.download_button(
             label="📥 Scarica il report Word",
-            data=file,
+            data=f,
             file_name="report_dimensionamento.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
