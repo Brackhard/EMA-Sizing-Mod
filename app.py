@@ -33,7 +33,7 @@ curve_files = st.file_uploader("Curve motore (puoi caricare più file)", type="x
 corsa_totale_input = st.number_input("Corsa totale attuatore [mm]", min_value=10.0, value=100.0)
 
 # --- Calcolo e selezione ---
-report_path = "/mnt/data/report_dimensionamento.docx"
+report_path = "report_dimensionamento.docx"
 
 if st.button("▶️ Calcola") and ciclo_file and viti_file and motori_file and riduttori_file:
     corsa_effettiva = ciclo_df["posizione"].max() - ciclo_df["posizione"].min()
